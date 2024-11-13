@@ -1,33 +1,43 @@
 module fifo_core (
-    input clk,
-    input reset,
-    input wr_en,
-    input rd_en,
-    input [WIDTH-1:0] input_data,
-    output reg [WIDTH-1:0] output_data,
-    output reg full,
-    output reg empty,
-    output reg [POINTER_WIDTH:0] count      // Xuất số lượng phần tử hiện có
+    clk,
+    reset,
+    wr_en,
+    rd_en,
+    input_data,
+    output_data,
+    full,
+    empty,
+    count      // Output the number of current elements
 );
 
-parameter DEPTH = 16;
-parameter WIDTH = 8;
-parameter POINTER_WIDTH = 4;
+parameter DEPTH = 16;           // D1-D16
+parameter WIDTH = 8;            // 8-bit Data
+parameter POINTER_WIDTH = 4;    // 4-bit Address
 
-reg [WIDTH-1:0] static_mem [DEPTH-1:0];    // Bộ nhớ dùng cho FIFO
+input clk;
+input reset;
+input wr_en;
+input rd_en;
+input [WIDTH-1:0] input_data;
+output reg [WIDTH-1:0] output_data;
+output reg full;
+output reg empty;
+output reg [POINTER_WIDTH:0] count;
 
-reg [POINTER_WIDTH-1:0] wr_ptr;            // Con trỏ ghi vòng
-reg [POINTER_WIDTH-1:0] rd_ptr;            // Con trỏ đọc vòng
-reg [POINTER_WIDTH:0] fifo_count;          // Số lượng phần tử hiện có trong FIFO
+reg [WIDTH-1:0] static_mem [DEPTH-1:0];    // Memory used for FIFO
 
-// Ghi dữ liệu vào FIFO
+reg [POINTER_WIDTH-1:0] wr_ptr;            // Circular write pointer
+reg [POINTER_WIDTH-1:0] rd_ptr;            // Circular read pointer
+reg [POINTER_WIDTH:0] fifo_count;          // Number of current elements in FIFO
+
+// Write data to FIFO
 always @(posedge clk or posedge reset) begin
     if (reset) begin
         wr_ptr <= 0;
         full <= 0;
     end else if (wr_en && !full) begin
         static_mem[wr_ptr] <= input_data;
-        wr_ptr <= (wr_ptr + 1) % DEPTH;     // Vòng
+        wr_ptr <= (wr_ptr + 1) % DEPTH;     // Circular
         if (fifo_count == DEPTH - 1)
             full <= 1;
         else
@@ -35,7 +45,7 @@ always @(posedge clk or posedge reset) begin
     end
 end
 
-// Đọc dữ liệu từ FIFO
+// Read data from FIFO
 always @(posedge clk or posedge reset) begin
     if (reset) begin
         rd_ptr <= 0;
@@ -43,7 +53,7 @@ always @(posedge clk or posedge reset) begin
         empty <= 1;
     end else if (rd_en && !empty) begin
         output_data <= static_mem[rd_ptr];
-        rd_ptr <= (rd_ptr + 1) % DEPTH;     // Vòng
+        rd_ptr <= (rd_ptr + 1) % DEPTH;     // Circular
         if (fifo_count == 1)
             empty <= 1;
         else
@@ -51,19 +61,19 @@ always @(posedge clk or posedge reset) begin
     end
 end
 
-// Đếm số phần tử trong FIFO
+// Count the number of elements in FIFO
 always @(posedge clk or posedge reset) begin
     if (reset)
         fifo_count <= 0;
     else if (wr_en && !full && rd_en && !empty)
-        fifo_count <= fifo_count;  // Nếu ghi và đọc đồng thời
+        fifo_count <= fifo_count;  // If write and read simultaneously
     else if (wr_en && !full)
-        fifo_count <= fifo_count + 1;  // Ghi dữ liệu
+        fifo_count <= fifo_count + 1;  // Write data
     else if (rd_en && !empty)
-        fifo_count <= fifo_count - 1;  // Đọc dữ liệu
+        fifo_count <= fifo_count - 1;  // Read data
 end
 
-// Xuất giá trị fifo_count
+// Output the value of fifo_count
 always @(*) begin
     count = fifo_count;
 end
