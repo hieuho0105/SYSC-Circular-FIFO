@@ -1,13 +1,16 @@
 module fifo_core (
-    clk,
+    clk,                    // The Synchronous FIFO has 
+							// a single clock port for both data-read and data-write operations, 
+							// it means it is used for synchronising across two process 
+							// when two process are running on same clock
     reset,
-    wr_en,
-    rd_en,
+    wr_en,                  // Write Enable
+    rd_en,                  // Read Enable
     input_data,
     output_data,
     full,
     empty,
-    count      // Output the number of current elements
+    count                   // Output the number of current elements
 );
 
 parameter DEPTH = 16;           // D1-D16
@@ -29,6 +32,19 @@ reg [WIDTH-1:0] static_mem [DEPTH-1:0];    // Memory used for FIFO
 reg [POINTER_WIDTH-1:0] wr_ptr;            // Circular write pointer
 reg [POINTER_WIDTH-1:0] rd_ptr;            // Circular read pointer
 reg [POINTER_WIDTH:0] fifo_count;          // Number of current elements in FIFO
+
+// Check if FIFO is full or empty
+always @ (*) begin
+    if (reset) begin
+        full <= 1'b0;
+        empty <= 1'b1;				
+    end
+    else begin
+        full <= (fifo_count == DEPTH);
+        empty <= (fifo_count == 0);
+    end
+end
+
 
 // Write data to FIFO
 always @(posedge clk or posedge reset) begin
