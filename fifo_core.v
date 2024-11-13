@@ -6,7 +6,8 @@ module fifo_core (
     input [WIDTH-1:0] input_data,
     output reg [WIDTH-1:0] output_data,
     output reg full,
-    output reg empty
+    output reg empty,
+    output reg [POINTER_WIDTH:0] count      // Xuất số lượng phần tử hiện có
 );
 
 parameter DEPTH = 16;
@@ -60,6 +61,11 @@ always @(posedge clk or posedge reset) begin
         fifo_count <= fifo_count + 1;  // Ghi dữ liệu
     else if (rd_en && !empty)
         fifo_count <= fifo_count - 1;  // Đọc dữ liệu
+end
+
+// Xuất giá trị fifo_count
+always @(*) begin
+    count = fifo_count;
 end
 
 endmodule

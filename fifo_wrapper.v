@@ -16,12 +16,13 @@ parameter POINTER_WIDTH = 4;
 wire wr_en, rd_en;
 wire full, empty;
 wire [WIDTH-1:0] fifo_output_data;
-wire [1:0] status;                         // Trạng thái từ CSR
+wire [POINTER_WIDTH:0] count;              // Số lượng phần tử trong FIFO
 wire [WIDTH-1:0] fifo_input_data;
 
 // Kết nối CSR module
 fifo_csr #(
-    .WIDTH(WIDTH)
+    .WIDTH(WIDTH),
+    .POINTER_WIDTH(POINTER_WIDTH)
 ) csr_inst (
     .clk(clk),
     .reset(reset),
@@ -35,7 +36,8 @@ fifo_csr #(
     .wr_en(wr_en),
     .rd_en(rd_en),
     .fifo_input_data(fifo_input_data),
-    .fifo_output_data(fifo_output_data)
+    .fifo_output_data(fifo_output_data),
+    .count(count)                          // Kết nối tín hiệu count
 );
 
 // Kết nối Core module
@@ -51,7 +53,8 @@ fifo_core #(
     .input_data(fifo_input_data),
     .output_data(fifo_output_data),
     .full(full),
-    .empty(empty)
+    .empty(empty),
+    .count(count)                         // Xuất tín hiệu count từ core
 );
 
 // Trạng thái FIFO ra Avalon
